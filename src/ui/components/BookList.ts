@@ -9,6 +9,7 @@ export interface BookListHandlers {
   getBooks: () => Book[];
   onBorrow: (book: Book) => void;
   onReturn: (book: Book) => void;
+  onDelete: (book: Book) => void;
 }
 
 export class BookList {
@@ -57,20 +58,29 @@ export class BookList {
 
   private createItem(book: Book): HTMLElement {
     const item = el("li", "list-group-item d-flex justify-content-between align-items-center");
-    const button = el(
+
+    const borrowButton = el(
       "button",
       book.isBorrowed ? "btn btn-warning btn-sm" : "btn btn-primary btn-sm",
       book.isBorrowed ? "Повернути" : "Позичити",
     );
-    button.type = "button";
-    button.addEventListener("click", () => {
+    borrowButton.type = "button";
+    borrowButton.addEventListener("click", () => {
       if (book.isBorrowed) {
         this.handlers.onReturn(book);
       } else {
         this.handlers.onBorrow(book);
       }
     });
-    item.append(el("span", "", book.toString()), button);
+
+    const deleteButton = el("button", "btn btn-outline-danger btn-sm", "Видалити");
+    deleteButton.type = "button";
+    deleteButton.addEventListener("click", () => this.handlers.onDelete(book));
+
+    const actions = el("div", "d-flex gap-2");
+    actions.append(borrowButton, deleteButton);
+
+    item.append(el("span", "", book.toString()), actions);
     return item;
   }
 }

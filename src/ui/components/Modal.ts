@@ -87,3 +87,22 @@ export function askUserId(title: string): Promise<string | null> {
     ],
   }).then(() => result);
 }
+
+export function askConfirm(message: string, confirmLabel = "Видалити"): Promise<boolean> {
+  let confirmed = false;
+
+  return openModal({
+    body: el("p", "mb-0", message),
+    buttons: [
+      { label: "Скасувати", className: "btn btn-secondary", onClick: (close) => close() },
+      {
+        label: confirmLabel,
+        className: "btn btn-danger",
+        onClick: (close) => {
+          confirmed = true;
+          close();
+        },
+      },
+    ],
+  }).then(() => confirmed);
+}

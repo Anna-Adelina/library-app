@@ -7,10 +7,11 @@ import { User } from "./models/User";
 import { BorrowService } from "./services/BorrowService";
 import { Library } from "./services/Library";
 import { NotificationService } from "./services/NotificationService";
+import { RemovalService } from "./services/RemovalService";
 import { Storage } from "./services/Storage";
 import { BookForm } from "./ui/components/BookForm";
 import { BookList } from "./ui/components/BookList";
-import { askUserId, showMessage } from "./ui/components/Modal";
+import { askConfirm, askUserId, showMessage } from "./ui/components/Modal";
 import { UserForm } from "./ui/components/UserForm";
 import { UserList } from "./ui/components/UserList";
 import { el } from "./ui/dom";
@@ -33,14 +34,19 @@ const users = new Library<User>(
 );
 
 const borrowService = new BorrowService(books, users);
+const removalService = new RemovalService(books, users, borrowService);
 const notifications = new NotificationService({ show: showMessage });
 
 const bookList = new BookList({
   getBooks: () => books.getAll(),
   onBorrow: (book) => void handleBorrow(book),
   onReturn: (book) => void handleReturn(book),
+  onDelete: (book) => void handleDeleteBook(book),
 });
-const userList = new UserList({ getUsers: () => users.getAll() });
+const userList = new UserList({
+  getUsers: () => users.getAll(),
+  onDelete: (user) => void handleDeleteUser(user),
+});
 
 function saveBooks(): void {
   storage.save(BOOKS_KEY, books.getAll());
@@ -80,6 +86,34 @@ async function handleReturn(book: Book): Promise<void> {
   const returned = borrowService.giveBack(book.id);
   saveBooks();
   await notifications.returned(returned);
+}
+
+async function handleDeleteBook(book: Book): Promise<void> {
+  const confirmed = await askConfirm(`Видалити книгу «${book.toString()}»?`);
+  if (!confirmed) {
+    return;
+  }
+
+  const result = removalService.removeBook(book.id);
+  if (result.status === "borrowed") {
+    await notifications.bookIsBorrowed(result.book);
+    return;
+  }
+  saveBooks();
+}
+
+async function handleDeleteUser(user: User): Promise<void> {
+  const confirmed = await askConfirm(`Видалити користувача «${user.toString()}»?`);
+  if (!confirmed) {
+    return;
+  }
+
+  const result = removalService.removeUser(user.id);
+  if (result.status === "has-books") {
+    await notifications.userHasBooks(result.user, result.count);
+    return;
+  }
+  saveUsers();
 }
 
 const bookForm = new BookForm((data) => {
