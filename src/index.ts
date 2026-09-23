@@ -4,10 +4,13 @@ import { Book } from "./models/Book";
 import { IBook } from "./models/interfaces/IBook";
 import { IUser } from "./models/interfaces/IUser";
 import { User } from "./models/User";
+import { BorrowService } from "./services/BorrowService";
 import { Library } from "./services/Library";
+import { NotificationService } from "./services/NotificationService";
 import { Storage } from "./services/Storage";
 import { BookForm } from "./ui/components/BookForm";
 import { BookList } from "./ui/components/BookList";
+import { askUserId, showMessage } from "./ui/components/Modal";
 import { UserForm } from "./ui/components/UserForm";
 import { UserList } from "./ui/components/UserList";
 import { el } from "./ui/dom";
@@ -29,13 +32,53 @@ const users = new Library<User>(
   (storage.load<IUser[]>(USERS_KEY) ?? []).map((data) => User.fromJSON(data)),
 );
 
-const bookList = new BookList();
+const borrowService = new BorrowService(books, users);
+const notifications = new NotificationService({ show: showMessage });
+
+const bookList = new BookList({
+  onBorrow: (book) => void handleBorrow(book),
+  onReturn: (book) => void handleReturn(book),
+});
 const userList = new UserList();
+
+function saveBooks(): void {
+  storage.save(BOOKS_KEY, books.getAll());
+  bookList.render(books.getAll());
+}
+
+async function handleBorrow(book: Book): Promise<void> {
+  const userId = await askUserId("Введіть ID користувача для позичення книги:");
+  if (userId === null) {
+    return;
+  }
+
+  const result = borrowService.borrow(book.id, userId);
+  switch (result.status) {
+    case "success":
+      saveBooks();
+      await notifications.borrowed(result.book, result.user);
+      break;
+    case "already-borrowed":
+      await notifications.alreadyBorrowed(result.book);
+      break;
+    case "user-not-found":
+      await notifications.userNotFound(userId);
+      break;
+    case "limit-reached":
+      await notifications.limitReached(result.user);
+      break;
+  }
+}
+
+async function handleReturn(book: Book): Promise<void> {
+  const returned = borrowService.giveBack(book.id);
+  saveBooks();
+  await notifications.returned(returned);
+}
 
 const bookForm = new BookForm((data) => {
   books.add(new Book(generateId(), data.title, data.author, data.year));
-  storage.save(BOOKS_KEY, books.getAll());
-  bookList.render(books.getAll());
+  saveBooks();
 });
 
 const userForm = new UserForm((data) => {
