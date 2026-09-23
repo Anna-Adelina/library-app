@@ -36,14 +36,20 @@ const borrowService = new BorrowService(books, users);
 const notifications = new NotificationService({ show: showMessage });
 
 const bookList = new BookList({
+  getBooks: () => books.getAll(),
   onBorrow: (book) => void handleBorrow(book),
   onReturn: (book) => void handleReturn(book),
 });
-const userList = new UserList();
+const userList = new UserList({ getUsers: () => users.getAll() });
 
 function saveBooks(): void {
   storage.save(BOOKS_KEY, books.getAll());
-  bookList.render(books.getAll());
+  bookList.refresh();
+}
+
+function saveUsers(): void {
+  storage.save(USERS_KEY, users.getAll());
+  userList.refresh();
 }
 
 async function handleBorrow(book: Book): Promise<void> {
@@ -83,8 +89,7 @@ const bookForm = new BookForm((data) => {
 
 const userForm = new UserForm((data) => {
   users.add(new User(generateId(), data.name, data.email));
-  storage.save(USERS_KEY, users.getAll());
-  userList.render(users.getAll());
+  saveUsers();
 });
 
 document.body.classList.add("bg-light");
@@ -97,5 +102,5 @@ root.append(
   userList.element,
 );
 
-bookList.render(books.getAll());
-userList.render(users.getAll());
+bookList.refresh();
+userList.refresh();
