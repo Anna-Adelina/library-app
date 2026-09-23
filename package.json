@@ -12,11 +12,17 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "css-loader": "^7.1.5",
     "html-webpack-plugin": "^5.6.8",
+    "style-loader": "^4.0.0",
     "ts-loader": "^9.6.2",
     "typescript": "^5.9.3",
     "webpack": "^5.111.1",
     "webpack-cli": "^7.2.3",
     "webpack-dev-server": "^6.0.0"
+  },
+  "dependencies": {
+    "@popperjs/core": "^2.11.8",
+    "bootstrap": "^5.3.8"
   }
 }
