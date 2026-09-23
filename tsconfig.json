@@ -8,7 +8,8 @@
     "skipLibCheck": true,
     "rootDir": ".",
     "outDir": "dist",
-    "sourceMap": true
+    "sourceMap": true,
+    "types": ["mocha"]
   },
   "include": ["src", "tests"]
 }
