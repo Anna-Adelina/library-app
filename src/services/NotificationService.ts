@@ -34,4 +34,18 @@ export class NotificationService {
   alreadyBorrowed(book: Book): Promise<void> {
     return this.notifier.show(`${book.toString()} вже позичена.`, "Зрозуміло!");
   }
+
+  bookIsBorrowed(book: Book): Promise<void> {
+    return this.notifier.show(
+      `Книгу «${book.toString()}» зараз позичено. Спершу поверніть її.`,
+      "Зрозуміло!",
+    );
+  }
+
+  userHasBooks(user: User, count: number): Promise<void> {
+    return this.notifier.show(
+      `Користувач ${user.name} має позичені книги (${count}). Спершу поверніть їх.`,
+      "Зрозуміло!",
+    );
+  }
 }

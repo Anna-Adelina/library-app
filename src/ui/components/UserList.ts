@@ -6,6 +6,7 @@ import { Pagination } from "./Pagination";
 
 export interface UserListHandlers {
   getUsers: () => User[];
+  onDelete: (user: User) => void;
 }
 
 export class UserList {
@@ -32,10 +33,19 @@ export class UserList {
     if (items.length === 0) {
       this.list.replaceChildren(el("li", "list-group-item text-muted", "Користувачів поки немає"));
     } else {
-      this.list.replaceChildren(
-        ...items.map((user) => el("li", "list-group-item", user.toString())),
-      );
+      this.list.replaceChildren(...items.map((user) => this.createItem(user)));
     }
     this.pagination.render(page, totalPages);
+  }
+
+  private createItem(user: User): HTMLElement {
+    const item = el("li", "list-group-item d-flex justify-content-between align-items-center");
+
+    const deleteButton = el("button", "btn btn-outline-danger btn-sm", "Видалити");
+    deleteButton.type = "button";
+    deleteButton.addEventListener("click", () => this.handlers.onDelete(user));
+
+    item.append(el("span", "", user.toString()), deleteButton);
+    return item;
   }
 }
