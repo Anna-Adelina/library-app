@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 
-export default defineConfig({
+export default defineConfig(({ command, isPreview }) => ({
+  base: command === "build" || isPreview ? "/library-app/" : "/",
   server: {
     port: 9000,
     open: true,
@@ -8,4 +9,4 @@ export default defineConfig({
   build: {
     outDir: "dist",
   },
-});
+}));
